@@ -54,27 +54,31 @@ const GoogleSheetsViewer = () => {
   const autoDetectSheets = async (): Promise<void> => {
     setDetectingSheets(true)
     
-    // Try to fetch config from a config sheet (gid=config)
-    // If it fails, fall back to localStorage or default
+    // Try to fetch config from a config sheet (gid=1)
     try {
       const configUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=1`
+      console.log('Fetching config from:', configUrl)
       const response = await fetch(configUrl)
       
       if (response.ok) {
         const csvText = await response.text()
-        const lines = csvText.split('\n').filter(line => line.trim())
+        console.log('Config CSV:', csvText)
+        const parsedData = parseCSV(csvText)
+        console.log('Parsed config data:', parsedData)
         
         // Parse config sheet: expected format is "gid,name" on each line
         const sheets: Sheet[] = []
-        for (let i = 1; i < lines.length; i++) { // Skip header row
-          const parts = lines[i].split(',')
-          if (parts.length >= 2) {
+        for (let i = 1; i < parsedData.length; i++) { // Skip header row
+          const row = parsedData[i]
+          if (row.length >= 2 && row[0] && row[1]) {
             sheets.push({
-              gid: parts[0].trim().replace(/"/g, ''),
-              name: parts[1].trim().replace(/"/g, '')
+              gid: row[0].trim(),
+              name: row[1].trim()
             })
           }
         }
+        
+        console.log('Loaded sheets from config:', sheets)
         
         if (sheets.length > 0) {
           setAvailableSheets(sheets)
@@ -83,12 +87,15 @@ const GoogleSheetsViewer = () => {
           setDetectingSheets(false)
           return
         }
+      } else {
+        console.log('Config sheet fetch failed with status:', response.status)
       }
     } catch (err) {
-      console.log('Config sheet not found, using default')
+      console.log('Error loading config sheet:', err)
     }
     
     // Fallback: use default sheet
+    console.log('Using default sheet configuration')
     const defaultSheets = [{ gid: '0', name: 'Laurelwood Area' }]
     setAvailableSheets(defaultSheets)
     setSheetGid(defaultSheets[0].gid)
