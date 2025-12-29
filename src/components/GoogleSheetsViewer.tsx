@@ -204,6 +204,33 @@ const GoogleSheetsViewer = () => {
     })
   }
 
+  const scrollToStreet = (streetName: string): void => {
+    const element = document.getElementById(`street-${streetName}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      // Highlight briefly
+      element.style.backgroundColor = '#fff9c4'
+      setTimeout(() => {
+        element.style.backgroundColor = ''
+      }, 2000)
+    }
+  }
+
+  const getUniqueStreets = (): string[] => {
+    if (data.length < 2) return []
+    const streetColumnIndex = 1 // Assuming street is the second column (index 1)
+    const streets = new Set<string>()
+    
+    for (let i = 2; i < data.length; i++) { // Start from row 2 (skip header and first data row)
+      const street = data[i][streetColumnIndex]
+      if (street && street.trim()) {
+        streets.add(street.trim())
+      }
+    }
+    
+    return Array.from(streets).sort()
+  }
+
   const renderTable = () => {
     if (data.length === 0) return null
 
@@ -287,9 +314,22 @@ const GoogleSheetsViewer = () => {
                   </>
                 ) : (
                   <>
-                    {row.map((cell, cellIndex) => (
-                      <td key={cellIndex}>{cell}</td>
-                    ))}
+                    {row.map((cell, cellIndex) => {
+                      // Add ID to street name cells (second column, first occurrence)
+                      const isStreetColumn = cellIndex === 1
+                      const isFirstOccurrence = isStreetColumn && 
+                        rowIndex > 0 && // Not the first data row
+                        rows.slice(0, rowIndex).every(r => r[1] !== cell)
+                      
+                      return (
+                        <td 
+                          key={cellIndex}
+                          id={isFirstOccurrence ? `street-${cell}` : undefined}
+                        >
+                          {cell}
+                        </td>
+                      )
+                    })}
                     <td>
                       {/* Don't show Edit button for first data row (row index 0) */}
                       {rowIndex === 0 ? (
@@ -373,6 +413,52 @@ const GoogleSheetsViewer = () => {
 
       {data.length > 0 && (
         <div className="data-section">
+          {/* Street Navigation Dropdown */}
+          <div style={{
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <label htmlFor="street-selector" style={{
+              fontWeight: '600',
+              color: '#667eea',
+              fontSize: '14px'
+            }}>
+              🗺️ Jump to Street:
+            </label>
+            <select
+              id="street-selector"
+              onChange={(e) => {
+                if (e.target.value) {
+                  scrollToStreet(e.target.value)
+                  e.target.value = '' // Reset dropdown
+                }
+              }}
+              style={{
+                padding: '10px 16px',
+                border: '2px solid #667eea',
+                borderRadius: '8px',
+                background: 'white',
+                color: '#667eea',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                outline: 'none',
+                minWidth: '200px',
+                boxShadow: '0 2px 6px rgba(102, 126, 234, 0.2)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <option value="">Select a street...</option>
+              {getUniqueStreets().map((street) => (
+                <option key={street} value={street}>
+                  {street}
+                </option>
+              ))}
+            </select>
+          </div>
+          
           <h2>Total Contacts ({data.length - 2})</h2>
           {renderTable()}
         </div>
