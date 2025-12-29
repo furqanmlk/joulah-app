@@ -1,16 +1,16 @@
-import GoogleSheetsViewer from './components/GoogleSheetsViewer'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Home from './pages/Home'
+import Admin from './pages/Admin'
 import './styles/App.css'
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Joulah List</h1>
-      </header>
-      <main>
-        <GoogleSheetsViewer />
-      </main>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/admin" element={<Admin />} />
+      </Routes>
+    </Router>
   )
 }
 

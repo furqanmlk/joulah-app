@@ -54,18 +54,24 @@ const GoogleSheetsViewer = () => {
   const autoDetectSheets = async (): Promise<void> => {
     setDetectingSheets(true)
     
-    // Manually define your sheets here to avoid 400 errors
-    // Add or remove sheets as needed
-    const sheets: Sheet[] = [
-      { gid: '0', name: 'Laurelwood Area' },
-      // { gid: '123456', name: 'Another Sheet' }, // Add more sheets here
-    ]
+    // Load sheets from localStorage
+    const savedSheets = localStorage.getItem('joulah-sheets')
+    let sheets: Sheet[] = []
+    
+    if (savedSheets) {
+      sheets = JSON.parse(savedSheets)
+    } else {
+      // Default sheet if none saved
+      sheets = [{ gid: '0', name: 'Laurelwood Area' }]
+      localStorage.setItem('joulah-sheets', JSON.stringify(sheets))
+    }
     
     setAvailableSheets(sheets)
-    setSheetGid(sheets[0].gid)
-    
-    // Auto-fetch first sheet
-    fetchSheetData(sheets[0].gid)
+    if (sheets.length > 0) {
+      setSheetGid(sheets[0].gid)
+      // Auto-fetch first sheet
+      fetchSheetData(sheets[0].gid)
+    }
     
     setDetectingSheets(false)
   }
@@ -303,7 +309,7 @@ const GoogleSheetsViewer = () => {
 
         {availableSheets.length > 0 && (
           <div className="sheets-selector">
-            <h3>Available Sheets ({availableSheets.length}):</h3>
+            <h3>Available Areas ({availableSheets.length}):</h3>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
               {availableSheets.map((sheet) => (
                 <button
@@ -340,7 +346,7 @@ const GoogleSheetsViewer = () => {
 
       {data.length > 0 && (
         <div className="data-section">
-          <h2>Sheet Data ({data.length - 1} rows)</h2>
+          <h2>Total Contacts ({data.length - 2})</h2>
           {renderTable()}
         </div>
       )}
