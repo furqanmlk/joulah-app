@@ -80,8 +80,31 @@ const Admin = () => {
         }}>
           <h2 style={{ marginTop: 0, color: '#333', fontSize: '1.5rem', fontWeight: '600' }}>Manage Sheets</h2>
           
+          <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#fff3cd', borderRadius: '12px', border: '2px solid #ffc107' }}>
+            <h3 style={{ marginTop: 0, fontSize: '1.1rem', color: '#856404' }}>📋 Setup Instructions</h3>
+            <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#856404' }}>
+              To make your sheet configuration work across all devices:
+            </p>
+            <ol style={{ margin: '0 0 0 20px', padding: 0, fontSize: '14px', color: '#856404' }}>
+              <li>Open your Google Sheet</li>
+              <li>Create a new sheet tab and rename it to "Config"</li>
+              <li>Set the GID to <strong>1</strong> (right-click sheet tab → "Copy link" → look for gid=1)</li>
+              <li>In the Config sheet, add header row: <code>gid</code>, <code>name</code></li>
+              <li>Add your sheets below, one per row. Example:
+                <div style={{ marginTop: '8px', padding: '8px', background: 'white', borderRadius: '4px', fontFamily: 'monospace', fontSize: '13px' }}>
+                  gid,name<br/>
+                  0,Laurelwood Area<br/>
+                  123456,Another Area
+                </div>
+              </li>
+            </ol>
+          </div>
+          
           <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f8f9ff', borderRadius: '12px' }}>
-            <h3 style={{ marginTop: 0, fontSize: '1.2rem', color: '#555' }}>Add New Sheet</h3>
+            <h3 style={{ marginTop: 0, fontSize: '1.2rem', color: '#555' }}>Local Configuration (Browser Only)</h3>
+            <p style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
+              ⚠️ Changes here only affect this browser and won't sync to other devices.
+            </p>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <input
                 type="text"

@@ -54,24 +54,45 @@ const GoogleSheetsViewer = () => {
   const autoDetectSheets = async (): Promise<void> => {
     setDetectingSheets(true)
     
-    // Load sheets from localStorage
-    const savedSheets = localStorage.getItem('joulah-sheets')
-    let sheets: Sheet[] = []
-    
-    if (savedSheets) {
-      sheets = JSON.parse(savedSheets)
-    } else {
-      // Default sheet if none saved
-      sheets = [{ gid: '0', name: 'Laurelwood Area' }]
-      localStorage.setItem('joulah-sheets', JSON.stringify(sheets))
+    // Try to fetch config from a config sheet (gid=config)
+    // If it fails, fall back to localStorage or default
+    try {
+      const configUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=1`
+      const response = await fetch(configUrl)
+      
+      if (response.ok) {
+        const csvText = await response.text()
+        const lines = csvText.split('\n').filter(line => line.trim())
+        
+        // Parse config sheet: expected format is "gid,name" on each line
+        const sheets: Sheet[] = []
+        for (let i = 1; i < lines.length; i++) { // Skip header row
+          const parts = lines[i].split(',')
+          if (parts.length >= 2) {
+            sheets.push({
+              gid: parts[0].trim().replace(/"/g, ''),
+              name: parts[1].trim().replace(/"/g, '')
+            })
+          }
+        }
+        
+        if (sheets.length > 0) {
+          setAvailableSheets(sheets)
+          setSheetGid(sheets[0].gid)
+          fetchSheetData(sheets[0].gid)
+          setDetectingSheets(false)
+          return
+        }
+      }
+    } catch (err) {
+      console.log('Config sheet not found, using default')
     }
     
-    setAvailableSheets(sheets)
-    if (sheets.length > 0) {
-      setSheetGid(sheets[0].gid)
-      // Auto-fetch first sheet
-      fetchSheetData(sheets[0].gid)
-    }
+    // Fallback: use default sheet
+    const defaultSheets = [{ gid: '0', name: 'Laurelwood Area' }]
+    setAvailableSheets(defaultSheets)
+    setSheetGid(defaultSheets[0].gid)
+    fetchSheetData(defaultSheets[0].gid)
     
     setDetectingSheets(false)
   }
