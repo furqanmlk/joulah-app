@@ -54,48 +54,47 @@ const GoogleSheetsViewer = () => {
   const autoDetectSheets = async (): Promise<void> => {
     setDetectingSheets(true)
     
-    // Try to fetch config from a config sheet (gid=1)
-    try {
-      const configUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=1`
-      console.log('Fetching config from:', configUrl)
-      const response = await fetch(configUrl)
-      
-      if (response.ok) {
-        const csvText = await response.text()
-        console.log('Config CSV:', csvText)
-        const parsedData = parseCSV(csvText)
-        console.log('Parsed config data:', parsedData)
+    // Try multiple possible GIDs for the config sheet
+    const possibleGids = ['220772312', '327847089', '1', '0'] // Config sheet GID first
+    
+    for (const gid of possibleGids) {
+      try {
+        const configUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`
+        const response = await fetch(configUrl)
         
-        // Parse config sheet: expected format is "gid,name" on each line
-        const sheets: Sheet[] = []
-        for (let i = 1; i < parsedData.length; i++) { // Skip header row
-          const row = parsedData[i]
-          if (row.length >= 2 && row[0] && row[1]) {
-            sheets.push({
-              gid: row[0].trim(),
-              name: row[1].trim()
-            })
+        if (response.ok) {
+          const csvText = await response.text()
+          
+          // Check if this looks like a config sheet (has gid,name header)
+          if (csvText.toLowerCase().includes('gid') && csvText.toLowerCase().includes('name')) {
+            const parsedData = parseCSV(csvText)
+            
+            const sheets: Sheet[] = []
+            for (let i = 1; i < parsedData.length; i++) { // Skip header row
+              const row = parsedData[i]
+              if (row.length >= 2 && row[0] && row[1]) {
+                sheets.push({
+                  gid: row[0].trim(),
+                  name: row[1].trim()
+                })
+              }
+            }
+            
+            if (sheets.length > 0) {
+              setAvailableSheets(sheets)
+              setSheetGid(sheets[0].gid)
+              fetchSheetData(sheets[0].gid)
+              setDetectingSheets(false)
+              return
+            }
           }
         }
-        
-        console.log('Loaded sheets from config:', sheets)
-        
-        if (sheets.length > 0) {
-          setAvailableSheets(sheets)
-          setSheetGid(sheets[0].gid)
-          fetchSheetData(sheets[0].gid)
-          setDetectingSheets(false)
-          return
-        }
-      } else {
-        console.log('Config sheet fetch failed with status:', response.status)
+      } catch (err) {
+        // Config sheet not found with this GID
       }
-    } catch (err) {
-      console.log('Error loading config sheet:', err)
     }
     
     // Fallback: use default sheet
-    console.log('Using default sheet configuration')
     const defaultSheets = [{ gid: '0', name: 'Laurelwood Area' }]
     setAvailableSheets(defaultSheets)
     setSheetGid(defaultSheets[0].gid)
